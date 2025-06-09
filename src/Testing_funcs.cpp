@@ -37,13 +37,13 @@ void Print_test_data(FILE* output_file, Test_data* test_data, const char* label)
 
     fprintf(output_file, "Ticks;Time\n", ticks);
     fprintf(output_file, "%.2e;", ticks);
-    fprintf(output_file, "\'%.2lf\'\n", time_consumed_rdtsc*1000);
+    fprintf(output_file, "%.2lf\'\n", time_consumed_rdtsc*1000);
 }
 
 bool Master_test(Hash_table_t* hash_table, char* words_buffer, const char* output_file_name, int64_t max_symbols,
                  int test_num_of_cycles) {
 
-    FILE* output_file = fopen(output_file_name, "ab+");
+    FILE* output_file = fopen(output_file_name, "ab");
     if(!output_file) {
 
         DEBUG_PRINTF("ERROR: file was not opened\n");

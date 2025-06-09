@@ -110,7 +110,7 @@ int Compare_strings(void* element1, void* element2, int el_size) {
 uint64_t Hash_func_crc32_intrinsics(const void * buffer_start, const void * buffer_end) {
 
     uint64_t crc = Crc32_Init_Value;
-    __m256i vec = _mm256_loadu_si256((const __m256i*)buffer_start);
+    __m256i vec = _mm256_load_si256((const __m256i*)buffer_start);
 
     crc = _mm_crc32_u64(crc, _mm256_extract_epi64(vec, 0));
     crc = _mm_crc32_u64(crc, _mm256_extract_epi64(vec, 1));
@@ -125,6 +125,7 @@ uint64_t Hash_func_crc32_intrinsics(const void * buffer_start, const void * buff
 ### Анализ программы
 
 ![Flame_histogram_intrinsics](Screenshots/flame_histogram_intrinsics.png)
+![Flame_histogram_intrinsics](Screenshots/flame_histogram_sizes.png)
 Версия хэш-функции на интринсиках также равномерно распределяет слова по бакетам.
 
 ![Flame_graph2](Screenshots/Flame_graph2.png)
@@ -192,6 +193,8 @@ int64_t Hash_table_find(Hash_table_t* hash_table, void* element, int element_siz
 ```
 </details>
 
+Параметры компиляции через Godbolt:
+x86-64 gcc 14.2, -O3
 <details>
 <summary>Показать ассемблерный вариант, сгенерированный Godbolt</summary>
 

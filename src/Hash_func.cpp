@@ -16,8 +16,9 @@ uint64_t Hash_func_stack_version(const void * buffer_start, const void * buffer_
 
 uint64_t Hash_func_crc32_intrinsics(const void * buffer_start, const void * buffer_end) {
 
+    //ALIGN32_ASSERT(buffer_start);
     uint64_t crc = Crc32_Init_Value;
-    __m256i vec = _mm256_loadu_si256((const __m256i*)buffer_start);
+    __m256i vec = _mm256_load_si256((const __m256i*)buffer_start);
 
     crc = _mm_crc32_u64(crc, _mm256_extract_epi64(vec, 0));
     crc = _mm_crc32_u64(crc, _mm256_extract_epi64(vec, 1));
@@ -141,7 +142,7 @@ char* Hash_table_file_insert(Hash_table_t* hash_table, char* file_name, Compare_
         return NULL;
     }
 
-    char* file_buffer = (char*) calloc(file_size, sizeof(char));
+    char* file_buffer = (char*) aligned_calloc(file_size, sizeof(char), Memory_alignment);
     if(!file_buffer) {
 
         DEBUG_PRINTF("ERROR: memory was not allocated\n");
@@ -167,7 +168,7 @@ char* Hash_table_file_insert(Hash_table_t* hash_table, char* file_name, Compare_
     return file_buffer;
 }
 
-bool Hash_table_plot_hist(Hash_table_t* hash_table, const char* output_file_name1) {
+bool Hash_table_plot_hist(Hash_table_t* hash_table, const char* output_file_name1, const char* output_file_name2) {
 
     FILE* output_file = fopen(output_file_name1, "wb");
     if(!output_file) {
@@ -188,10 +189,16 @@ bool Hash_table_plot_hist(Hash_table_t* hash_table, const char* output_file_name
 
     int64_t table_size = hash_table->table_size;
     int64_t unique_elements = 0;
+    int buckets_sizes[Buckets_sizes_array_size] = {};
+    //List list_of_sizes = {};
+    //List_Ctor(&list_of_sizes, List_of_sizes_size);
     //DEBUG_PRINTF("table_size = %d\n", table_size);
     for (int bucket = 0; bucket < table_size; bucket++) {
 
         int elements_to_write = hash_table->lists_array[bucket].elements_amount;
+        if(elements_to_write < Buckets_sizes_array_size)
+            buckets_sizes[elements_to_write]++;
+        //int list_of_sizes_index = List_find_element_c(&list_of_sizes, &elements_to_write, sizeof(int), Compare_sizes);
 
         for (int i = 0; i < elements_to_write; i++) {
             int written = snprintf(output_buffer + offset, buffer_size - offset, "%d %d %.4lf\n",
@@ -210,10 +217,47 @@ bool Hash_table_plot_hist(Hash_table_t* hash_table, const char* output_file_name
 
     fwrite(output_buffer, sizeof(char), buffer_size, output_file);
 
-    system("gnuplot hist.gnuplot");
-
     DEBUG_PRINTF("unique_elements = %d\n", unique_elements);
     fclose(output_file);
+
+    output_file = fopen(output_file_name2, "wb");
+    if(!output_file) {
+
+        DEBUG_PRINTF("ERROR: file was not opened\n");
+        return false;
+    }
+    offset = 0;
+    int max_size = 0;
+    memset(output_buffer, 0, buffer_size);
+    for (int i = 0; i < Buckets_sizes_array_size; i++) {
+
+        int bucket_size = buckets_sizes[i];
+        if(bucket_size > max_size) {
+
+            max_size = bucket_size;
+
+        }
+        if(bucket_size > 0){
+
+            for(int j = 0; j < bucket_size; j++) {
+                int written = snprintf(output_buffer + offset, buffer_size - offset, "%d %d %.4lf\n",
+                                    i, j + 1, (double)j / (double)Max_amount_of_bucket_size);
+
+                if (written < 0 || written >= buffer_size - offset) {
+                    DEBUG_PRINTF("ERROR: buffer overflow or write error\n");
+                    free(output_buffer);
+                    return false;
+                }
+                offset += written;
+            }
+        }
+    }
+
+    fwrite(output_buffer, sizeof(char), buffer_size, output_file);
+    fclose(output_file);
+    printf("max_size = %d\n", max_size);
+    system("gnuplot hist.gnuplot");
+    system("gnuplot hist2.gnuplot");
     free(output_buffer);
     return true;
 }

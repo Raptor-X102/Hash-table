@@ -44,9 +44,9 @@ int main(int argc, char* argv[]) {
 
     printf("TOTAL:\n FOUND: %d\n NOT_FOUND: %d\n", words_found, words_not_found);
 
-    if(!Hash_table_plot_hist(&hash_table, files.write_files[0]))
-       DEBUG_PRINTF("ERROR: histogram was not created\n");
+    //if(!Hash_table_plot_hist(&hash_table, files.write_files[0], files.write_files[1]))
+       //DEBUG_PRINTF("ERROR: histogram was not created\n");
 
-    //Master_test(&hash_table, buffer, files.write_files[1], Max_symbols, Test_num_of_cycles);
+    Master_test(&hash_table, buffer, files.write_files[1], Max_symbols, Test_num_of_cycles);
     free(buffer);
 }
